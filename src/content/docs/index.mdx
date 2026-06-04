@@ -1,0 +1,119 @@
+---
+title: AIDD-17
+description: A coherent structure for product owners, architects, engineers, and AI to define and deliver software rapidly.
+template: splash
+hero:
+  tagline: A coherent structure for product owners, architects, engineers, and AI to define and deliver software rapidly.
+  actions:
+    - text: Explore the structure
+      link: /structure/
+      icon: right-arrow
+      variant: primary
+    - text: Use the template
+      link: /aidd-17-template/
+      icon: document
+      variant: minimal
+sidebar:
+  label: Overview
+  order: 10
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Control, agility, and visibility
+
+AI can help software teams move faster, but speed without structure creates drift. Product intent gets unclear. Architecture gets scattered. Implementation expands beyond scope. Verification becomes an afterthought.
+
+AIDD-17 brings these parts together so the team and AI work from the same definition.
+
+## The five-part model
+
+<CardGrid>
+  <Card title="Intent" icon="seti:notebook">
+    Why the project exists, who it is for, and what success looks like.
+  </Card>
+  <Card title="Shape" icon="seti:config">
+    How the system is structured: constraints, context, building blocks, data, runtime, deployment.
+  </Card>
+  <Card title="Rules" icon="approve-check">
+    Standards, decisions, and delivery rules that AI must follow without inventing its own.
+  </Card>
+  <Card title="Delivery" icon="rocket">
+    What will be implemented next, in what order, and how each slice traces back to intent.
+  </Card>
+  <Card title="Verification" icon="approve-check-circle">
+    How work is accepted. AI output is not complete until it passes verification.
+  </Card>
+</CardGrid>
+
+## AIDD-17 in two minutes
+
+A minimal example. Each part of the project definition exists so the implementation slice can be implemented without guessing.
+
+**Intent** — what should be built:
+
+> A user can create a text document. The system validates and stores it.
+
+**Shape** — how the system is built:
+
+> Web app → Backend API → Document storage → Database.
+
+**Rules** — what must be followed:
+
+> Backend validation is required. Frontend validation is not trusted.
+
+**Delivery** — what gets built next:
+
+> Slice IMP-001: add `POST /documents`, validate content, store record, return ID.
+
+**Verification** — how it is accepted:
+
+> Valid documents save. Invalid input is rejected. Tests cover both paths.
+
+The slice traces back to one behaviour, one feature, named building blocks, applicable rules, and explicit verification criteria. AI implements only the slice. When verification passes, the change is accepted and the project definition is updated if anything changed. See the [Delivery Loop](/delivery-loop/) for the full picture, or the [worked example](/document-assistant-example/) for a fuller version of the same project.
+
+## Who it is for
+
+<CardGrid>
+  <Card title="Product owners" icon="open-book">
+    Define intent — purpose, users, behaviours, features, success criteria.
+  </Card>
+  <Card title="Architects" icon="puzzle">
+    Define shape and rules — the system map and the constraints that hold it together.
+  </Card>
+  <Card title="Engineers" icon="laptop">
+    Define delivery and verification — what gets built next, and how it is proven correct.
+  </Card>
+  <Card title="AI" icon="star">
+    Operates inside the defined boundaries instead of guessing at missing information.
+  </Card>
+</CardGrid>
+
+## What AIDD-17 is not
+
+AIDD-17 is not a replacement for agile. It does not prescribe Scrum, Kanban, Shape Up, or any other delivery method. Each project can define its own way of working — but once defined, the rules must be clear enough for AI to follow without guessing.
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="The AIDD-17 Structure"
+    href="/structure/"
+    description="Five questions, seventeen sections — the full document architecture."
+  />
+  <LinkCard
+    title="The Delivery Loop"
+    href="/delivery-loop/"
+    description="How project definition, slices, AI, and verification move together as one repeating loop."
+  />
+  <LinkCard
+    title="Project Definition Template"
+    href="/aidd-17-template/"
+    description="A copyable template you can fill in to define a whole project from intent to verification."
+  />
+  <LinkCard
+    title="Implementation Slice Template"
+    href="/implementation-slice-template/"
+    description="A small, traceable unit of work inside the project definition."
+  />
+</CardGrid>

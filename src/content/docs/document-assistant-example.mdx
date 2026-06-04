@@ -1,0 +1,411 @@
+---
+title: "Worked Example: Document Assistant"
+description: A small AIDD-17 example showing how product intent, architecture, implementation, and verification connect.
+sidebar:
+  label: Worked Example
+  order: 50
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="tip" title="What this example shows">
+A small AI-assisted software project defined with AIDD-17. It does not fill every section in full detail — the purpose is to show **how the parts connect**, from product intent through to a verifiable implementation slice.
+</Aside>
+
+## Example system
+
+The system is a **document assistant**: a user saves a simple text document, asks questions about it, and receives answers grounded only in that document.
+
+<Aside type="caution">
+The assistant must not answer from general model knowledge.
+</Aside>
+
+## Traceability
+
+AIDD-17 connects the project from idea to implementation. The aim is to make each implementation slice traceable back to the project definition.
+
+```text
+Purpose
+↓
+Users
+↓
+Behaviours
+↓
+Features
+↓
+System Context
+↓
+Building Blocks
+↓
+Runtime Behaviour
+↓
+Implementation Slice
+↓
+Verification
+```
+
+## Intent
+
+*Sections 01–05 — what the product must achieve.*
+
+### 01 Purpose
+
+The document assistant allows users to ask questions about text documents. It exists to help users extract information from documents more quickly while keeping answers grounded in the document content.
+
+The system must not answer questions using unsupported information.
+
+### 02 Users
+
+**Primary user** — a person who wants to query a text document.
+
+The user can:
+
+- save a text document
+- view save status
+- ask questions about a document
+- view answers with supporting references
+
+### 03 Behaviours
+
+#### B-001 Create text document
+
+A user can create or upload one simple text document.
+
+The system validates the document content and size, stores the document, creates a document record, and shows whether the save succeeded or failed.
+
+#### B-002 Ask a question
+
+A user can ask a question about a document.
+
+The system searches the extracted document content and returns an answer using only relevant document content, including references to the source content used.
+
+#### B-003 Unsupported question
+
+If the system cannot answer from the document, it returns a fixed fallback response:
+
+> I cannot answer this from the document.
+
+### 04 Features
+
+- **F-001 Text document capture** — supports B-001
+- **F-002 Document question answering** — supports B-002, B-003
+
+### 05 Success Criteria
+
+The system is successful when:
+
+- a user can create or upload a valid text document
+- invalid document input is rejected
+- text documents are stored
+- a user can ask a question about a document
+- answers are grounded in the document
+- unsupported questions return the fallback response
+- generated answers include source references
+
+## Shape
+
+*Sections 07, 09–11 — how the system is structured.*
+
+### 07 System Context
+
+**Users**
+
+- Document user
+
+**External systems**
+
+- Object storage
+- Database
+- Text processing service
+- Search index
+- Language model provider
+
+**System boundary**
+
+The document assistant stores text documents, processes text, indexes document content, and generates grounded answers.
+
+It does **not** send emails, update external business systems, or answer questions from general model knowledge.
+
+### 09 Building Blocks
+
+- **Web application** — provides the user interface for saving documents and asking questions.
+- **Backend API** — receives save and question requests, validates them, and coordinates storage, indexing, retrieval, and answer generation.
+- **Document storage** — stores text documents.
+- **Application database** — stores document records, processing status, and answer logs.
+- **Text processing worker** — extracts text from text documents.
+- **Search index** — stores searchable document chunks.
+- **Language model adapter** — calls the language model provider. Ensures the model receives only the user question and retrieved document chunks.
+
+### 10 Data and Interfaces
+
+#### Document record
+
+```text
+Document
+- id
+- original_filename
+- storage_location
+- status
+- created_at
+- updated_at
+```
+
+#### Upload document interface
+
+```text
+POST /documents
+```
+
+Rules:
+
+- accepts simple text document content
+- rejects empty or oversized documents
+- returns a document ID when save succeeds
+
+#### Ask question interface
+
+```text
+POST /documents/{documentId}/questions
+```
+
+Rules:
+
+- accepts a user question
+- searches indexed content for the document
+- returns an answer and source references
+- returns fallback response when no relevant source is found
+
+### 11 Runtime Behaviour
+
+#### Document save flow
+
+1. The user creates or selects a text document.
+2. The web application sends the document content to the backend API.
+3. The backend API validates the document content and size.
+4. The backend API stores the document.
+5. The backend API creates a document record in the database.
+6. The backend API returns the document ID.
+7. The web application shows save success.
+
+#### Question answering flow
+
+1. The user enters a question for a document.
+2. The web application sends the question to the backend API.
+3. The backend API verifies that the document exists.
+4. The backend API searches the document chunks in the search index.
+5. If no relevant chunks are found, the backend API returns the fallback response.
+6. If relevant chunks are found, the backend API sends the question and chunks to the language model adapter.
+7. The language model adapter calls the model provider.
+8. The model returns an answer.
+9. The backend API validates that the answer includes source references.
+10. The backend API logs the answer.
+11. The web application displays the answer and sources.
+
+## Rules
+
+*Section 15 — what AI must follow.*
+
+### 15 Delivery Rules
+
+This example uses small implementation slices.
+
+- each slice must map to at least one behaviour
+- each slice must map to at least one feature
+- each slice must list affected building blocks
+- each slice must define what is out of scope
+- AI must not implement out-of-scope items
+- AI must stop if a required interface or rule is missing
+- every slice must include verification criteria
+
+## Delivery
+
+*Section 16 — what gets built, in what order.*
+
+### 16 Implementation Plan
+
+#### IMP-001 Create Text Document
+
+<Aside type="note">
+A fully worked-out version of this slice is shown in [Example implementation slice](#example-implementation-slice) below.
+</Aside>
+
+**Delivers:** B-001 Create text document, F-001 Text document capture
+
+**Touches:** Web application, Backend API, Document storage, Application database
+
+**Does not include:** text processing, search indexing, question answering
+
+#### IMP-002 Process Document Text
+
+**Delivers part of:** F-002 Document question answering
+
+**Touches:** Text processing worker, Application database, Document storage
+
+**Does not include:** question answering UI, language model calls
+
+#### IMP-003 Ask Question
+
+**Delivers:** B-002 Ask a question, B-003 Unsupported question, F-002 Document question answering
+
+**Touches:** Web application, Backend API, Search index, Language model adapter, Application database
+
+## Verification
+
+*Section 17 — how slices are accepted.*
+
+### 17 Verification
+
+#### Upload verification
+
+The save slice is accepted when:
+
+- valid text documents are accepted
+- non-text files are rejected
+- oversized documents are rejected
+- successful document saves create a document record
+- successful document saves return a document ID
+- failed document saves return a controlled error
+
+#### Question answering verification
+
+The question answering slice is accepted when:
+
+- questions can be submitted for documents
+- answers use retrieved document content
+- answers include source references
+- unsupported questions return the fallback response
+- answer attempts are logged
+
+## Example implementation slice
+
+This is what one of the planned slices looks like when written out in full.
+
+### Slice ID
+
+`IMP-001`
+
+### Name
+
+Create Text Document
+
+### Status
+
+Ready
+
+### Purpose
+
+Allow a user to create or upload one simple text document and create a document record.
+
+### Linked Intent
+
+**Behaviours**
+
+- B-001 Create text document
+
+**Features**
+
+- F-001 Text document capture
+
+**Success Criteria**
+
+- a user can create or upload a valid text document
+- invalid document input is rejected
+- text documents are stored
+
+### Linked Shape
+
+**Building Blocks**
+
+- Web application
+- Backend API
+- Document storage
+- Application database
+
+**Data and Interfaces**
+
+- Document record
+- `POST /documents`
+
+**Runtime Behaviour**
+
+- Document save flow
+
+### Applicable Rules
+
+- text files only
+- backend validation is required
+- frontend validation is not trusted
+- AI must not implement text processing in this slice
+- AI must not implement question answering in this slice
+
+### Scope
+
+This slice includes:
+
+- document input control in the web application
+- `POST /documents` backend endpoint
+- document content validation
+- document size validation
+- storage of the text document
+- creation of a document record
+- save success and failure responses
+
+### Out of Scope
+
+This slice does not include:
+
+- text processing
+- document chunking
+- embeddings
+- search indexing
+- question answering
+- language model calls
+
+### Implementation Tasks
+
+1. Add text document editor.
+2. Add backend document save endpoint.
+3. Add backend file validation.
+4. Store uploaded text in document storage.
+5. Create document record in the database.
+6. Return document ID on success.
+7. Return controlled errors on failure.
+8. Add automated tests.
+9. Update documentation if the implemented interface differs from this definition.
+
+### Expected Files or Areas to Change
+
+- web application document input area
+- backend document controller or route
+- document storage service
+- document database model or migration
+- document input tests
+
+### Files or Areas Not to Change
+
+- authentication
+- question answering
+- text processing worker
+- search index
+- language model adapter
+
+### Verification
+
+The slice is accepted when:
+
+- a valid text document is saved successfully
+- invalid document input fails
+- an oversized text document fails
+- the backend validates document content and size
+- a successful save creates a document record
+- a successful save returns a document ID
+- tests cover success and failure paths
+
+### AI Instructions
+
+- AI may implement only this slice.
+- AI must not implement text processing, indexing, or question answering.
+- AI must stop and report if document storage, database access, or document size limits are undefined.
+- AI must list all files changed.
+- AI must list all tests added or changed.
+- AI must list any assumptions made.

@@ -1,0 +1,225 @@
+---
+title: The AIDD-17 Structure
+description: How AIDD-17 is organised into five high-level parts and seventeen sections.
+sidebar:
+  label: Structure
+  order: 20
+---
+
+import { Aside, Card, CardGrid, Steps } from '@astrojs/starlight/components';
+
+<Aside type="tip" title="What AIDD-17 is">
+A **document architecture** for AI-assisted software delivery — not a development methodology. It does not replace agile. It gives agile teams a shared structure for defining software work clearly.
+</Aside>
+
+AIDD-17 is organised around five questions:
+
+<Steps>
+1. What are we trying to achieve?
+2. What shape does the system take?
+3. What rules must be followed?
+4. What are we implementing next?
+5. How do we know it is correct?
+</Steps>
+
+These five questions form the high-level model. They expand into seventeen sections that describe a software project from idea to implementation.
+
+The process can vary by project. The definitions must be explicit.
+
+## The five-part model
+
+AIDD-17 brings together product thinking, software architecture, delivery rules, implementation planning, and verification into one coherent structure.
+
+It exists to give software teams:
+
+- **control** — over scope, decisions, and AI behaviour
+- **agility** — to adapt without losing definition
+- **visibility** — into intent, structure, and progress
+
+Each project can define its own way of working. Once defined, the rules must be explicit so AI does not drift, guess, or expand scope.
+
+## 1. Intent
+
+**Intent defines what the product must achieve.** It is the product-owner side of the document.
+
+It answers:
+
+- why the project exists
+- who it is for
+- what users need to do
+- what behaviours the system must support
+- what success looks like
+
+Intent prevents AI from treating the project as a vague coding task.
+
+**Sections:**
+
+1. Purpose
+2. Users
+3. Behaviours
+4. Features
+5. Success Criteria
+
+<Aside type="note">
+AI cannot build the right thing if the product intent is undefined.
+</Aside>
+
+## 2. Shape
+
+**Shape defines how the system is structured.** It is the architecture side of the document.
+
+It answers:
+
+- what constraints apply
+- what systems are involved
+- what solution approach is being used
+- what building blocks make up the system
+- what data and interfaces exist
+- how the system behaves at runtime
+- where and how the system operates
+
+Shape gives AI the system map before it changes the system.
+
+**Sections:**
+
+6. Constraints
+7. System Context
+8. Solution Strategy
+9. Building Blocks
+10. Data and Interfaces
+11. Runtime Behaviour
+12. Deployment and Operations
+
+<Aside type="note">
+AI needs the map of the system before it changes the system.
+</Aside>
+
+## 3. Rules
+
+**Rules define what must be followed.** This is the control layer of AIDD-17.
+
+It answers:
+
+- what standards apply across the system
+- what decisions have already been made
+- how delivery works for this project
+- what AI is allowed to do
+- when AI must stop and ask for clarification
+- what must not be changed without human approval
+
+AIDD-17 does not prescribe a universal process. It gives each project a place to define its own rules clearly.
+
+**Sections:**
+
+13. Cross-Cutting Rules
+14. Decisions
+15. Delivery Rules
+
+<Aside type="note">
+Teams are free to choose their process. AI is not free to invent one.
+</Aside>
+
+## 4. Delivery
+
+**Delivery defines what will be implemented.** It connects the implementation plan back to the product and architecture.
+
+It answers:
+
+- what will be built
+- in what order
+- what each implementation slice delivers
+- which behaviours, features, architecture sections, and interfaces each slice maps to
+- what AI should work on next
+
+Delivery is where AIDD-17 can reduce the need for disconnected tickets. Each implementation slice should be traceable back to the project definition.
+
+**Section:**
+
+16. Implementation Plan
+
+<Aside type="note">
+Every implementation slice should map back to defined intent, shape, rules, and verification.
+</Aside>
+
+## 5. Verification
+
+**Verification defines how the work is accepted.**
+
+It answers:
+
+- what must be tested
+- what acceptance criteria apply
+- what review is required
+- what "done" means
+- how the team proves the work is correct
+
+AI-generated output is not complete just because code has been produced. It is complete when it satisfies the verification rules.
+
+**Section:**
+
+17. Verification
+
+<Aside type="caution">
+AI output is not complete because it generated code. It is complete when it passes verification.
+</Aside>
+
+## The 17 sections at a glance
+
+```text
+AIDD-17
+├── Intent
+│   ├── 01 Purpose
+│   ├── 02 Users
+│   ├── 03 Behaviours
+│   ├── 04 Features
+│   └── 05 Success Criteria
+│
+├── Shape
+│   ├── 06 Constraints
+│   ├── 07 System Context
+│   ├── 08 Solution Strategy
+│   ├── 09 Building Blocks
+│   ├── 10 Data and Interfaces
+│   ├── 11 Runtime Behaviour
+│   └── 12 Deployment and Operations
+│
+├── Rules
+│   ├── 13 Cross-Cutting Rules
+│   ├── 14 Decisions
+│   └── 15 Delivery Rules
+│
+├── Delivery
+│   └── 16 Implementation Plan
+│
+└── Verification
+    └── 17 Verification
+```
+
+## Who uses each part
+
+<CardGrid>
+  <Card title="Product owners" icon="open-book">
+    Use **Intent** to define what matters.
+  </Card>
+  <Card title="Architects" icon="puzzle">
+    Use **Shape** and **Rules** to define how the system works and what constraints apply.
+  </Card>
+  <Card title="Engineers" icon="laptop">
+    Use **Delivery** and **Verification** to implement and prove the work.
+  </Card>
+  <Card title="AI" icon="star">
+    Uses the complete structure as context so it can assist without inventing missing information.
+  </Card>
+</CardGrid>
+
+## Summary
+
+AIDD-17 brings the project into one visible structure:
+
+- **Intent** defines what should be built.
+- **Shape** defines how the system is organised.
+- **Rules** define what must be followed.
+- **Delivery** defines what will be implemented.
+- **Verification** defines how the work is accepted.
+
+Together, these parts give product owners, architects, engineers, and AI a shared project definition for rapid software delivery without losing control.
