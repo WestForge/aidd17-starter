@@ -28,6 +28,34 @@ npm run dev
 npm run build
 ```
 
+## AIDD execution bundles
+
+Validate that the AIDD templates and implementation slices contain the sections needed for generated bundles:
+
+```bash
+npm run aidd:check
+```
+
+Generate an execution bundle for a single implementation slice:
+
+```bash
+npm run aidd:bundle -- IMP-001
+```
+
+Generate bundles for every concrete implementation slice:
+
+```bash
+npm run aidd:bundle -- --all
+```
+
+Generated bundles are written to:
+
+```text
+dist/aidd-bundles/
+```
+
+The source documentation remains authoritative. Do not edit generated bundles as the source of truth; update the implementation slice and regenerate the bundle.
+
 ## Important folders
 
 ```text

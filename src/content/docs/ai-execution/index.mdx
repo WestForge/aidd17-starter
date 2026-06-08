@@ -1,0 +1,68 @@
+---
+title: AI Execution
+description: Turn AIDD-17 project definition into bounded execution payloads for AI implementation and review.
+sidebar:
+  label: Overview
+  order: 10
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+AIDD-17 is not only a documentation structure. It is a delivery control system for AI-assisted work.
+
+The project definition remains the source of truth. AI execution turns that source into smaller, safer payloads that tell an implementation agent what to read, what to change, what not to change, how to stop, and how completion will be judged.
+
+## Why this exists
+
+AI agents waste time and credits when they have to infer the world from a whole documentation site. They may load too much context, miss the authoritative rule, or implement a nearby feature that was never requested.
+
+AIDD-17 avoids that by packaging work into bounded execution slices and generated bundles.
+
+<CardGrid>
+  <Card title="Less AI wandering" icon="seti:config">
+    Bundles tell agents which documents matter first and which areas are out of bounds.
+  </Card>
+  <Card title="Less repeated explanation" icon="open-book">
+    Prompts, constraints, acceptance criteria, and handoff rules travel with the slice.
+  </Card>
+  <Card title="Less wrong-context work" icon="approve-check-circle">
+    Each bundle declares authority, scope, forbidden behaviour, and stop conditions.
+  </Card>
+</CardGrid>
+
+## Execution flow
+
+1. Define or update an implementation slice.
+2. Run the AIDD bundle checker.
+3. Generate an execution bundle for the slice.
+4. Give the bundle to the implementation agent.
+5. Review the result against the acceptance criteria and AI Execution Contract.
+
+## Local commands
+
+```bash
+npm run aidd:check
+npm run aidd:bundle -- IMP-001
+npm run aidd:bundle -- --all
+```
+
+Bundles are generated into:
+
+```text
+dist/aidd-bundles/
+```
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Execution Bundles"
+    href="/ai-execution/bundles/"
+    description="How generated bundles turn implementation slices into agent-ready payloads."
+  />
+  <LinkCard
+    title="Implementation Slice Template"
+    href="/implementation-slice-template/"
+    description="The source template used to define one bounded unit of work."
+  />
+</CardGrid>

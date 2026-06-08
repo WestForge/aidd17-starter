@@ -14,6 +14,24 @@ src/content/docs/aidd-17/
 
 The Markdown and MDX files are the source of truth. The Starlight site is the rendered view.
 
+## Execution bundles
+
+Use generated bundles when they are available. They are created from implementation slices and placed in:
+
+```text
+dist/aidd-bundles/
+```
+
+Useful commands:
+
+```bash
+npm run aidd:check
+npm run aidd:bundle -- IMP-001
+npm run aidd:bundle -- --all
+```
+
+The source documentation remains authoritative. Do not edit generated bundles as the source of truth. Update the relevant implementation slice, then regenerate the bundle.
+
 ## Before implementation
 
 Before implementing any change, read:

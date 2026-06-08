@@ -17,6 +17,14 @@ export default defineConfig({
             { label: 'Principles', slug: 'principles' },
           ],
         },
+
+        {
+          label: 'AI Execution',
+          items: [
+            { label: 'Overview', slug: 'ai-execution' },
+            { label: 'Execution Bundles', slug: 'ai-execution/bundles' },
+          ],
+        },
         {
           label: 'Templates',
           items: [

@@ -75,7 +75,104 @@ Draft | Ready | In Progress | Review | Accepted | Rejected
 
 ## Verification
 
+### Automated Tests
+
 - ...
+
+### Manual Checks
+
+- ...
+
+### Acceptance Criteria
+
+- ...
+
+### Definition of Done
+
+- ...
+
+## AI Execution Contract
+
+### This slice is authoritative for
+
+- ...
+
+### This slice is not authoritative for
+
+- ...
+
+### Required behaviour
+
+- Implement only this slice.
+- Preserve linked contracts unless this slice explicitly changes them.
+- Follow the linked decisions and delivery rules.
+
+### Forbidden behaviour
+
+- Do not implement out-of-scope items.
+- Do not create duplicate concepts or parallel systems.
+- Do not invent product behaviour, architecture, interfaces, rules, or verification criteria.
+
+## Context Loading Order
+
+### Read first
+
+1. This implementation slice.
+2. Linked decisions.
+3. Expected files or areas to change.
+4. Acceptance criteria.
+
+### Read only if needed
+
+1. Linked behaviours.
+2. Linked features.
+3. Linked building blocks.
+4. Linked runtime behaviour.
+5. Cross-cutting rules.
+
+### Do not load unless asked
+
+1. Archive folders.
+2. Rejected options.
+3. Generated docs.
+4. Unrelated implementation slices.
+
+## Stop Conditions
+
+- Stop if required information is missing, contradictory, or ambiguous.
+- Stop if files outside the expected scope are required.
+- Stop if security, privacy, authentication, authorization, payments, regulated data, or audit logging are affected without explicit rules.
+- Stop if acceptance criteria cannot be verified.
+
+## Codex Prompt
+
+```text
+Implement this slice according to the source document and acceptance criteria.
+
+Rules:
+- Touch only the expected files or areas unless blocked.
+- Do not implement out-of-scope items.
+- Do not perform broad refactors.
+- Stop and report if required information is missing.
+- Run the smallest relevant verification command after changes.
+- Return files changed, tests added or changed, assumptions, and verification performed.
+```
+
+## Review Prompt
+
+```text
+Review the implementation of this slice against the acceptance criteria and AI Execution Contract.
+
+Report:
+- Missing acceptance criteria
+- Unauthorised file changes
+- Out-of-scope behaviour
+- Duplicated systems or concepts
+- Hardcoded values that should be configured
+- Compile, test, runtime, security, or privacy risks
+
+Do not rewrite code unless asked.
+```
 
 ## AI Instructions
 

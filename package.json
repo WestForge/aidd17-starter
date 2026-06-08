@@ -8,7 +8,9 @@
     "start": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "aidd:check": "node scripts/aidd-bundle.mjs check",
+    "aidd:bundle": "node scripts/aidd-bundle.mjs bundle"
   },
   "dependencies": {
     "@astrojs/check": "latest",

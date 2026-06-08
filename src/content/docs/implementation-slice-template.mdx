@@ -189,19 +189,98 @@ List the conditions that must be true for this slice to be accepted.
 
 Define when this slice is complete.
 
+## AI Execution Contract
+
+Define exactly how an AI implementation agent must treat this slice.
+
+### This slice is authoritative for
+
+- ...
+
+### This slice is not authoritative for
+
+- ...
+
+### Required behaviour
+
+- Implement only this slice.
+- Preserve existing public contracts unless the slice explicitly changes them.
+- Prefer the named building blocks, rules, and decisions linked above.
+
+### Forbidden behaviour
+
+- Do not implement out-of-scope items.
+- Do not create parallel systems or duplicate concepts.
+- Do not invent product behaviour, architecture, interfaces, data structures, delivery rules, or verification criteria.
+
+## Context Loading Order
+
+Tell agents what to read first and what to avoid loading unless needed.
+
+### Read first
+
+1. This implementation slice.
+2. Linked decisions.
+3. Expected files or areas to change.
+4. Acceptance criteria.
+
+### Read only if needed
+
+1. Linked behaviours.
+2. Linked features.
+3. Linked building blocks.
+4. Linked runtime behaviour.
+5. Cross-cutting rules.
+
+### Do not load unless asked
+
+1. Archive folders.
+2. Rejected options.
+3. Generated docs.
+4. Unrelated implementation slices.
+
+## Stop Conditions
+
+AI must stop and report if:
+
+- Required information is missing, contradictory, or ambiguous.
+- The change requires files outside the expected scope.
+- The change affects security, privacy, authentication, authorization, payments, regulated data, or audit logging without explicit rules.
+- Acceptance criteria cannot be verified.
+
+## Codex Prompt
+
+```text
+Implement this slice according to the source document and acceptance criteria.
+
+Rules:
+- Touch only the expected files or areas unless blocked.
+- Do not implement out-of-scope items.
+- Do not perform broad refactors.
+- Stop and report if required information is missing.
+- Run the smallest relevant verification command after changes.
+- Return files changed, tests added or changed, assumptions, and verification performed.
+```
+
+## Review Prompt
+
+```text
+Review the implementation of this slice against the acceptance criteria and AI Execution Contract.
+
+Report:
+- Missing acceptance criteria
+- Unauthorised file changes
+- Out-of-scope behaviour
+- Duplicated systems or concepts
+- Hardcoded values that should be configured
+- Compile, test, runtime, security, or privacy risks
+
+Do not rewrite code unless asked.
+```
+
 ## AI Instructions
 
-Define how AI may assist with this slice.
-
-Example:
-
-- AI may edit only the files listed in expected areas unless it explains why another file must change.
-- AI must not implement out-of-scope items.
-- AI must stop if required information is missing.
-- AI must provide a summary of changes.
-- AI must list tests added or changed.
-- AI must list any assumptions made.
-- AI must not invent product behaviour, architecture, or delivery rules.
+Define any extra AI instructions that are specific to this slice.
 
 ## Review Notes
 
