@@ -7,12 +7,14 @@
     "aidd": "node scripts/aidd.mjs",
     "aidd:check": "node scripts/aidd.mjs check",
     "aidd:list": "node scripts/aidd.mjs list",
+    "aidd:module:create": "node scripts/aidd.mjs module:create",
+    "aidd:module:list": "node scripts/aidd.mjs module:list",
     "aidd:capability:create": "node scripts/aidd.mjs capability:create",
+    "aidd:capability:list": "node scripts/aidd.mjs capability:list",
     "aidd:slice": "node scripts/aidd.mjs slice",
     "aidd:slice:ready": "node scripts/aidd.mjs slice:ready",
     "aidd:bundle": "node scripts/aidd.mjs bundle",
     "aidd:capability": "node scripts/aidd.mjs capability",
     "aidd:clean": "node scripts/aidd.mjs clean"
-  },
-  "devDependencies": {}
+  }
 }

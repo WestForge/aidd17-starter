@@ -1,10 +1,9 @@
 {
-  "id": "TEMPLATE-SLICE-001",
-  "title": "Delivery Slice Template",
-  "capability": "capability-slug",
+  "id": "__SLICE_ID__",
+  "title": "__SLICE_TITLE__",
+  "capability": "__CAPABILITY_SLUG__",
   "status": "draft",
   "readyForImplementation": false,
-  "scopeLocked": true,
-  "sliceFile": "delivery-slice.md",
-  "sourceSections": []
+  "createdAt": "__CREATED_AT__",
+  "modules": []
 }

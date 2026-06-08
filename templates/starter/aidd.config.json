@@ -1,17 +1,21 @@
 {
-  "workspaceRoot": ".",
+  "root": ".",
   "commonDir": "common",
-  "capabilitiesDir": "capabilities",
-  "deliveryDir": "delivery",
-  "bundlesDir": "bundles",
-  "commonFiles": [
-    "01-project-overview.md",
-    "02-product-definition.md",
-    "03-audience-and-users.md",
-    "04-decisions.md",
-    "05-decision-ledger.md",
-    "06-delivery-rules.md"
+  "modulesDir": "modules",
+  "moduleTemplateDir": "modules/_template",
+  "moduleFiles": [
+    "index.md",
+    "01-purpose.md",
+    "02-boundaries.md",
+    "03-interfaces.md",
+    "04-dependencies.md",
+    "05-architecture.md",
+    "06-standards.md",
+    "07-decisions.md",
+    "08-risks.md"
   ],
+  "capabilitiesDir": "capabilities",
+  "capabilityTemplateDir": "capabilities/_template",
   "capabilityFiles": [
     "01-outcomes.md",
     "02-scope.md",
@@ -25,17 +29,7 @@
     "10-risks.md",
     "11-validation.md"
   ],
-  "requiredReadySections": [
-    "Delivery Scope",
-    "Files",
-    "Tasks",
-    "Acceptance Criteria",
-    "AI Execution Contract",
-    "Context Loading Order",
-    "Stop Conditions",
-    "Implementation Prompt",
-    "Review Prompt"
-  ],
-  "capabilityTemplateDir": "capabilities/_template",
-  "deliveryTemplateDir": "delivery/_template"
+  "deliveryDir": "delivery",
+  "deliveryTemplateDir": "delivery/_template",
+  "bundlesDir": "bundles"
 }

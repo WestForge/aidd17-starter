@@ -1,31 +1,10 @@
 # AGENTS
 
-This repository uses AIDD as a plain Markdown delivery workspace.
+AI agents should load context in this order:
 
-## Source of truth
+1. The delivery slice or generated bundle.
+2. The capability referenced by the slice.
+3. The modules referenced by the capability.
+4. Common delivery rules, standards, and decision ledger.
 
-- `common/` contains project-wide context and rules.
-- `capabilities/` contains evolving capability definitions.
-- `delivery/` contains scope-locked delivery slices.
-- `bundles/` contains generated agent-ready outputs.
-
-## Generic templates
-
-- `capabilities/_template/` describes the generic capability sections.
-- `delivery/_template/` describes the generic delivery slice shape.
-- Do not implement work from template folders.
-
-## Implementation rule
-
-Do not implement from a delivery slice unless it is marked `ready` and an implementation bundle has been generated.
-
-Use:
-
-```powershell
-npm run aidd:slice:ready -- <SLICE-ID>
-npm run aidd:bundle -- <SLICE-ID>
-```
-
-## Agent context loading
-
-For implementation work, read the generated bundle first. Only climb back to delivery, capability, or common docs if the bundle explicitly instructs you to.
+Respect module boundaries and stop when required work crosses an undefined or conflicting boundary.
