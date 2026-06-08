@@ -7,4 +7,4 @@ AI agents should load context in this order:
 3. The modules referenced by the capability.
 4. Common delivery rules, standards, and decision ledger.
 
-Respect module boundaries and stop when required work crosses an undefined or conflicting boundary.
+Respect module boundaries. Do not expand implementation scope beyond the delivery slice.

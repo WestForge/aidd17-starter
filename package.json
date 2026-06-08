@@ -1,7 +1,7 @@
 {
   "name": "aidd17-starter",
-  "version": "0.2.0",
-  "description": "Create a plain Markdown AIDD workspace for AI-assisted delivery.",
+  "version": "0.3.0",
+  "description": "Create and update plain Markdown AIDD workspaces for AI-assisted delivery.",
   "type": "module",
   "bin": {
     "create-aidd": "./bin/create-aidd.mjs"
@@ -14,8 +14,9 @@
   "keywords": [
     "aidd",
     "ai",
-    "markdown",
+    "documentation",
     "delivery",
+    "markdown",
     "modules",
     "capabilities"
   ]

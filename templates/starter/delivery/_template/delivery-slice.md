@@ -24,6 +24,10 @@ TODO: Summarise the relevant capability scope for this slice.
 
 - TODO
 
+### Explicitly Deferred
+
+- TODO
+
 ## Allowed Files
 
 - TODO
@@ -38,6 +42,9 @@ TODO: Summarise the relevant capability scope for this slice.
 
 **Goal:** TODO
 
+**Steps:**
+1. TODO
+
 **Acceptance:**
 - TODO
 
@@ -47,7 +54,27 @@ TODO: Summarise the relevant capability scope for this slice.
 
 ## AI Execution Contract
 
-Respect referenced module boundaries. Do not expand scope.
+### This slice is authoritative for
+
+- The implementation scope for this slice.
+- The task list and acceptance criteria.
+
+### This slice is not authoritative for
+
+- Future capability work.
+- Broad architecture rewrites.
+
+### Required behaviour
+
+- Complete listed tasks only.
+- Respect referenced module boundaries.
+- Stop if scope conflicts with module boundaries.
+
+### Forbidden behaviour
+
+- Do not expand scope.
+- Do not modify forbidden files.
+- Do not bypass module boundaries.
 
 ## Context Loading Order
 
@@ -58,4 +85,9 @@ Respect referenced module boundaries. Do not expand scope.
 
 ## Stop Conditions
 
-Stop and report if required work crosses an undefined module boundary.
+Stop and report if:
+
+- Required module boundaries are missing.
+- A task crosses an undefined module boundary.
+- Acceptance criteria cannot be met.
+- Required files do not exist.

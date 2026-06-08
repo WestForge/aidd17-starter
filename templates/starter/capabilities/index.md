@@ -2,7 +2,7 @@
 
 Capabilities define product or technical outcomes. A capability may reference one or more modules.
 
-No real capabilities are created during setup. Create one explicitly:
+No real capabilities are created during setup. Create one explicitly when the project is ready:
 
 ```bash
 npm run aidd:capability:create -- companion-behaviour --title "Companion Behaviour" --modules ai,characters
