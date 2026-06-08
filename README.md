@@ -1,85 +1,171 @@
-# AIDD-17 Starlight Starter
+# AIDD-17 Starter
 
-This is a starter project for using AIDD-17 with Astro Starlight.
+AIDD-17 Starter creates a plain Markdown delivery workspace for AI-assisted software work.
 
-AIDD-17 is a document architecture for AI-assisted software delivery. It brings product intent, software architecture, delivery rules, implementation planning, and verification into one shared project definition.
+It is designed to be installed into an existing project as a `docs` or `Docs` directory. The generated workspace is repo-native, editor-friendly, and does not require Astro, Starlight, MDX, or a website.
 
-## Why Starlight?
+## Create a docs workspace from GitHub
 
-The Markdown and MDX files are the source of truth.
-
-Astro Starlight renders those files as a readable documentation site for humans, while AI agents can work directly with the same files in the repository.
-
-## Install
+From the root of the project you want to add AIDD to:
 
 ```bash
-npm install
+npx github:WestForge/aidd17-starter docs
 ```
 
-## Run locally
+Or, if your project uses a capitalised docs folder:
 
 ```bash
-npm run dev
+npx github:WestForge/aidd17-starter Docs
 ```
 
-## Build
+This creates a folder like:
 
-```bash
-npm run build
+```text
+docs/
+  README.md
+  AGENTS.md
+  aidd.config.json
+  common/
+  capabilities/
+  delivery/
+  bundles/
+  scripts/
+  templates/
+  package.json
 ```
 
-## AIDD execution bundles
-
-Validate that the AIDD templates and implementation slices contain the sections needed for generated bundles:
+Then run:
 
 ```bash
+cd docs
 npm run aidd:check
 ```
 
-Generate an execution bundle for a single implementation slice:
+The generated workspace has no external dependencies. `npm install` is optional and only needed if you want a `package-lock.json` or later add dependencies.
+
+## Local filesystem test
+
+If you have cloned this repository locally, you can test creation without publishing to npm:
+
+```powershell
+cd C:\tmp\aidd-test
+npx C:\tmp\aidd17-starter docs --no-install
+cd docs
+npm run aidd:check
+```
+
+On macOS/Linux:
 
 ```bash
-npm run aidd:bundle -- IMP-001
+cd /tmp/aidd-test
+npx /tmp/aidd17-starter docs --no-install
+cd docs
+npm run aidd:check
 ```
 
-Generate bundles for every concrete implementation slice:
+## CLI prompts
+
+When run interactively, the creator asks for:
+
+- target directory, default `docs`
+- project name
+- project description
+- whether to run `npm install`
+
+You can skip prompts with defaults:
 
 ```bash
-npm run aidd:bundle -- --all
+npx github:WestForge/aidd17-starter docs --yes
 ```
 
-Generated bundles are written to:
+You can force npm install if wanted:
+
+```bash
+npx github:WestForge/aidd17-starter docs --install
+```
+
+## Core workflow inside the generated workspace
+
+```bash
+npm run aidd:check
+npm run aidd:capability:create -- payments --title "Payments"
+npm run aidd:slice -- payments --id PAY-SLICE-001 --title "Payments Slice 001"
+npm run aidd:slice:ready -- PAY-SLICE-001
+npm run aidd:bundle -- PAY-SLICE-001
+```
+
+Delivery slices start as `draft`. AIDD will not generate an implementation bundle until the slice is marked `ready`.
+
+## Workspace model
 
 ```text
-dist/aidd-bundles/
+common/        Project-wide context and rules
+capabilities/  Evolving capability definitions and the generic capability template
+delivery/      Scope-locked delivery slices and the generic delivery slice template
+bundles/       Generated agent-ready implementation and capability bundles
+scripts/       Local AIDD tooling
+templates/     Reusable implementation-plan template
 ```
 
-The source documentation remains authoritative. Do not edit generated bundles as the source of truth; update the implementation slice and regenerate the bundle.
+## Create a capability
 
-## Important folders
+AIDD does not create a first capability during setup. Create one when you are ready:
+
+```bash
+npm run aidd:capability:create -- payments --title "Payments"
+```
+
+This creates ordered Markdown files:
 
 ```text
-src/content/docs/
-  Reference site pages and templates.
-
-src/content/docs/aidd-17/
-  The project definition workspace.
-
-src/content/docs/aidd-17/16-implementation-plan/slices/
-  Implementation slices that AI agents can work from.
-
-src/content/docs/aidd-17/14-decisions/
-  Decision records.
+capabilities/payments/
+  index.md
+  01-outcomes.md
+  02-scope.md
+  03-user-journeys.md
+  04-functional-requirements.md
+  05-non-functional-requirements.md
+  06-data-model.md
+  07-integrations.md
+  08-architecture.md
+  09-ux-ui.md
+  10-risks.md
+  11-validation.md
 ```
 
-## Recommended workflow
+## Create a delivery slice
 
-1. Fill in the AIDD-17 project definition under `src/content/docs/aidd-17/`.
-2. Create an implementation slice under `16-implementation-plan/slices/`.
-3. Give the slice and linked sections to an AI agent.
-4. Verify the result against `17-verification/`.
-5. Update the project definition when accepted work changes behaviour, architecture, or delivery rules.
+A delivery slice is a scope-locked snapshot created from a capability:
 
-## Core rule
+```bash
+npm run aidd:slice -- payments --id PAY-SLICE-001 --title "Payments Slice 001"
+```
 
-Teams are free to choose their process. AI is not free to invent one.
+Complete the slice, replace placeholder tasks, define acceptance criteria, then mark it ready:
+
+```bash
+npm run aidd:slice:ready -- PAY-SLICE-001
+```
+
+## Generate an implementation bundle
+
+Once the slice is ready:
+
+```bash
+npm run aidd:bundle -- PAY-SLICE-001
+```
+
+This creates:
+
+```text
+bundles/PAY-SLICE-001/
+  PAY-SLICE-001.bundle.md
+  implementation-plan.md
+  manifest.json
+```
+
+The bundle is the agent-ready execution file.
+
+## Package naming
+
+This repository can be called `aidd17-starter`, while the executable exposed by the package is `create-aidd`. That lets the GitHub install command stay simple now and keeps the path open for a future npm package.

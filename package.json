@@ -1,22 +1,21 @@
 {
-  "name": "aidd17-starlight-starter",
+  "name": "aidd17-starter",
   "version": "0.1.0",
-  "private": true,
+  "description": "Create a plain Markdown AIDD workspace for AI-assisted delivery.",
   "type": "module",
-  "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro check && astro build",
-    "preview": "astro preview",
-    "check": "astro check",
-    "aidd:check": "node scripts/aidd-bundle.mjs check",
-    "aidd:bundle": "node scripts/aidd-bundle.mjs bundle"
+  "bin": {
+    "create-aidd": "./bin/create-aidd.mjs"
   },
-  "dependencies": {
-    "@astrojs/check": "latest",
-    "@astrojs/starlight": "latest",
-    "astro": "latest",
-    "typescript": "latest"
-  },
-  "devDependencies": {}
+  "files": [
+    "bin",
+    "templates"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "aidd",
+    "ai",
+    "documentation",
+    "delivery",
+    "markdown"
+  ]
 }
