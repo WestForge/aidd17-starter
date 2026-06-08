@@ -30,9 +30,15 @@ try {
   const targetName = positional[0] || (yes ? 'docs' : await ask('Target directory', 'docs'));
   const projectName = yes ? titleFromSlug(targetName) : await ask('Project name', titleFromSlug(targetName));
   const description = yes
-    ? 'Plain Markdown delivery workspace for AI-assisted software work.'
-    : await ask('Project description', 'Plain Markdown delivery workspace for AI-assisted software work.');
-  const installDependencies = flags.has('--install') ? true : noInstall ? false : yes ? false : await askYesNo('Run npm install? This is optional because AIDD has no dependencies.', false);
+      ? 'Plain Markdown delivery workspace for AI-assisted software work.'
+      : await ask('Project description', 'Plain Markdown delivery workspace for AI-assisted software work.');
+  const installDependencies = flags.has('--install')
+      ? true
+      : noInstall
+          ? false
+          : yes
+              ? false
+              : await askYesNo('Run npm install? This is optional because AIDD has no dependencies.', false);
 
   const targetDir = path.resolve(process.cwd(), targetName);
   await ensureTarget(targetDir, force);
@@ -59,8 +65,12 @@ try {
   console.log(`  cd ${path.relative(process.cwd(), targetDir) || '.'}`);
   console.log('  npm run aidd:check');
   console.log('  npm run aidd:capability:create -- payments --title "Payments"');
-  console.log('');
-  console.log('Optional: run npm install if you want a package-lock.json in the AIDD folder.');
+
+  if (!installDependencies) {
+    console.log('');
+    console.log('Optional: run npm install if you want a package-lock.json in the AIDD folder.');
+  }
+
   console.log('');
 } finally {
   rl.close();
@@ -74,30 +84,41 @@ async function ask(message, defaultValue) {
 async function askYesNo(message, defaultValue) {
   const suffix = defaultValue ? 'Y/n' : 'y/N';
   const answer = (await rl.question(`${message} (${suffix}): `)).trim().toLowerCase();
-  if (!answer) return defaultValue;
+
+  if (!answer) {
+    return defaultValue;
+  }
+
   return ['y', 'yes'].includes(answer);
 }
 
 async function ensureTarget(targetDir, allowForce) {
   try {
     const entries = await fs.readdir(targetDir);
+
     if (entries.length > 0 && !allowForce) {
       console.error(`Target directory already exists and is not empty: ${targetDir}`);
       console.error('Use --force to overwrite files in that folder.');
       process.exit(1);
     }
   } catch (error) {
-    if (error.code !== 'ENOENT') throw error;
+    if (error.code !== 'ENOENT') {
+      throw error;
+    }
   }
+
   await fs.mkdir(targetDir, { recursive: true });
 }
 
 async function copyDir(from, to) {
   await fs.mkdir(to, { recursive: true });
+
   const entries = await fs.readdir(from, { withFileTypes: true });
+
   for (const entry of entries) {
     const source = path.join(from, entry.name);
     const target = path.join(to, entry.name);
+
     if (entry.isDirectory()) {
       await copyDir(source, target);
     } else {
@@ -108,45 +129,60 @@ async function copyDir(from, to) {
 
 async function replacePlaceholders(root, replacements) {
   const entries = await fs.readdir(root, { withFileTypes: true });
+
   for (const entry of entries) {
     const fullPath = path.join(root, entry.name);
+
     if (entry.isDirectory()) {
       await replacePlaceholders(fullPath, replacements);
       continue;
     }
-    if (!/\.(md|json|mjs|txt)$/i.test(entry.name)) continue;
+
+    if (!/\.(md|json|mjs|txt)$/i.test(entry.name)) {
+      continue;
+    }
+
     let content = await fs.readFile(fullPath, 'utf8');
+
     for (const [from, to] of Object.entries(replacements)) {
       content = content.split(from).join(to);
     }
+
     await fs.writeFile(fullPath, content);
   }
 }
 
 function runCommand(command, args, cwd) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const executable = process.platform === 'win32' && command === 'npm'
+        ? 'npm.cmd'
+        : command;
+
+    const child = spawn(executable, args, {
       cwd,
-      stdio: 'inherit',
-      shell: process.platform === 'win32'
+      stdio: 'inherit'
     });
+
     child.on('close', (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`${command} ${args.join(' ')} failed with exit code ${code}`));
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`${executable} ${args.join(' ')} failed with exit code ${code}`));
+      }
     });
   });
 }
 
 function packageNameFromFolder(folderName) {
   return folderName
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'aidd-workspace';
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'aidd-workspace';
 }
 
 function titleFromSlug(slug) {
   return slug
-    .replace(/[-_]+/g, ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+      .replace(/[-_]+/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
 }
