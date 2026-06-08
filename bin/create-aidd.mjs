@@ -154,20 +154,26 @@ async function replacePlaceholders(root, replacements) {
 
 function runCommand(command, args, cwd) {
   return new Promise((resolve, reject) => {
-    const executable = process.platform === 'win32' && command === 'npm'
-        ? 'npm.cmd'
-        : command;
+    const executable = process.platform === 'win32' ? 'cmd.exe' : command;
+    const executableArgs = process.platform === 'win32'
+        ? ['/d', '/s', '/c', command, ...args]
+        : args;
 
-    const child = spawn(executable, args, {
+    const child = spawn(executable, executableArgs, {
       cwd,
-      stdio: 'inherit'
+      stdio: 'inherit',
+      windowsVerbatimArguments: false
     });
 
+    child.on('error', reject);
+
     child.on('close', (code) => {
+      const displayCommand = [command, ...args].join(' ');
+
       if (code === 0) {
         resolve();
       } else {
-        reject(new Error(`${executable} ${args.join(' ')} failed with exit code ${code}`));
+        reject(new Error(`${displayCommand} failed with exit code ${code}`));
       }
     });
   });
