@@ -1,0 +1,10 @@
+{
+  "slug": "__CAPABILITY_SLUG__",
+  "title": "__CAPABILITY_TITLE__",
+  "status": "template",
+  "modules": [],
+  "createdAt": null,
+  "deprecatedAt": null,
+  "archivedAt": null,
+  "reason": null
+}
