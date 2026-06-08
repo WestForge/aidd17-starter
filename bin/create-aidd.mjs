@@ -23,12 +23,8 @@ const rl = readline.createInterface({ input, output });
 
 try {
   const mode = positional[0] === 'update' ? 'update' : 'create';
-
-  if (mode === 'update') {
-    await updateFlow();
-  } else {
-    await createFlow();
-  }
+  if (mode === 'update') await updateFlow();
+  else await createFlow();
 } finally {
   rl.close();
 }
@@ -76,6 +72,7 @@ async function createFlow() {
   console.log('  npm run aidd:check');
   console.log('  npm run aidd:module:create -- ai --title "AI"');
   console.log('  npm run aidd:capability:create -- companion-behaviour --title "Companion Behaviour" --modules ai');
+  console.log('  npm run aidd:bundle:create -- COMP-BEH-001 --title "Companion Behaviour Phase 1" --capability companion-behaviour');
 
   if (!installDependencies) {
     console.log('');
@@ -96,11 +93,7 @@ async function updateFlow() {
 
   await assertWorkspace(targetDir);
 
-  const result = {
-    copied: [],
-    skipped: [],
-    merged: []
-  };
+  const result = { copied: [], merged: [] };
 
   await copyDir(path.join(templateRoot, 'scripts'), path.join(targetDir, 'scripts'), {
     overwrite: true,
@@ -113,6 +106,7 @@ async function updateFlow() {
   await mergeAiddConfig(targetDir, result);
   await mergePackageScripts(targetDir, result);
   await ensureCapabilityModuleArrays(targetDir, result);
+  await migrateLegacyTopLevelBundles(targetDir, result);
 
   console.log('');
   console.log('AIDD workspace updated.');
@@ -125,7 +119,7 @@ async function updateFlow() {
   console.log('Next steps:');
   console.log(`  cd ${path.relative(process.cwd(), targetDir) || '.'}`);
   console.log('  npm run aidd:check');
-  console.log('  npm run aidd:module:create -- ai --title "AI"');
+  console.log('  npm run aidd:delivery:roadmap');
   console.log('');
 }
 
@@ -133,7 +127,7 @@ async function copyFrameworkOwnedTemplates(targetDir, result) {
   const templatePaths = [
     'modules/_template',
     'capabilities/_template',
-    'delivery/_template'
+    'delivery/bundles/_template'
   ];
 
   for (const relativePath of templatePaths) {
@@ -150,7 +144,7 @@ async function ensureMissingWorkspaceDirs(targetDir, result) {
     'modules',
     'capabilities',
     'delivery',
-    'bundles',
+    'delivery/bundles',
     'common/standards'
   ];
 
@@ -165,7 +159,9 @@ async function ensureMissingWorkspaceDirs(targetDir, result) {
   await copyFileIfMissing(path.join(templateRoot, 'modules/index.md'), path.join(targetDir, 'modules/index.md'), result, 'modules/index.md');
   await copyFileIfMissing(path.join(templateRoot, 'capabilities/index.md'), path.join(targetDir, 'capabilities/index.md'), result, 'capabilities/index.md');
   await copyFileIfMissing(path.join(templateRoot, 'delivery/index.md'), path.join(targetDir, 'delivery/index.md'), result, 'delivery/index.md');
-  await copyFileIfMissing(path.join(templateRoot, 'bundles/index.md'), path.join(targetDir, 'bundles/index.md'), result, 'bundles/index.md');
+  await copyFileIfMissing(path.join(templateRoot, 'delivery/roadmap.md'), path.join(targetDir, 'delivery/roadmap.md'), result, 'delivery/roadmap.md');
+  await copyFileIfMissing(path.join(templateRoot, 'delivery/roadmap.json'), path.join(targetDir, 'delivery/roadmap.json'), result, 'delivery/roadmap.json');
+  await copyFileIfMissing(path.join(templateRoot, 'delivery/bundles/index.md'), path.join(targetDir, 'delivery/bundles/index.md'), result, 'delivery/bundles/index.md');
   await copyDir(path.join(templateRoot, 'common/standards'), path.join(targetDir, 'common/standards'), {
     overwrite: false,
     result,
@@ -176,12 +172,8 @@ async function ensureMissingWorkspaceDirs(targetDir, result) {
 async function mergeAiddConfig(targetDir, result) {
   const sourcePath = path.join(templateRoot, 'aidd.config.json');
   const targetPath = path.join(targetDir, 'aidd.config.json');
-
   const source = JSON.parse(await fs.readFile(sourcePath, 'utf8'));
-  const target = await exists(targetPath)
-    ? JSON.parse(await fs.readFile(targetPath, 'utf8'))
-    : {};
-
+  const target = await exists(targetPath) ? JSON.parse(await fs.readFile(targetPath, 'utf8')) : {};
   const merged = deepMergeMissing(target, source);
   await fs.writeFile(targetPath, `${JSON.stringify(merged, null, 2)}\n`);
   result.merged.push('aidd.config.json');
@@ -190,25 +182,15 @@ async function mergeAiddConfig(targetDir, result) {
 async function mergePackageScripts(targetDir, result) {
   const sourcePath = path.join(templateRoot, 'package.json');
   const targetPath = path.join(targetDir, 'package.json');
-
   const source = JSON.parse(await fs.readFile(sourcePath, 'utf8'));
   const target = await exists(targetPath)
     ? JSON.parse(await fs.readFile(targetPath, 'utf8'))
-    : {
-        name: packageNameFromFolder(path.basename(targetDir)),
-        version: '0.1.0',
-        private: true,
-        type: 'module',
-        scripts: {}
-      };
+    : { name: packageNameFromFolder(path.basename(targetDir)), version: '0.1.0', private: true, type: 'module', scripts: {} };
 
   target.type ??= 'module';
   target.private ??= true;
   target.scripts ??= {};
-
-  for (const [name, value] of Object.entries(source.scripts ?? {})) {
-    target.scripts[name] = value;
-  }
+  for (const [name, value] of Object.entries(source.scripts ?? {})) target.scripts[name] = value;
 
   await fs.writeFile(targetPath, `${JSON.stringify(target, null, 2)}\n`);
   result.merged.push('package.json scripts');
@@ -216,23 +198,17 @@ async function mergePackageScripts(targetDir, result) {
 
 async function ensureCapabilityModuleArrays(targetDir, result) {
   const capabilitiesDir = path.join(targetDir, 'capabilities');
-
-  if (!(await exists(capabilitiesDir))) {
-    return;
-  }
+  if (!(await exists(capabilitiesDir))) return;
 
   const entries = await fs.readdir(capabilitiesDir, { withFileTypes: true });
   let changed = 0;
 
   for (const entry of entries) {
     if (!entry.isDirectory() || entry.name.startsWith('_')) continue;
-
     const manifestPath = path.join(capabilitiesDir, entry.name, 'capability.json');
-
     if (!(await exists(manifestPath))) continue;
 
     const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
-
     if (!Array.isArray(manifest.modules)) {
       manifest.modules = [];
       await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
@@ -240,15 +216,34 @@ async function ensureCapabilityModuleArrays(targetDir, result) {
     }
   }
 
-  if (changed > 0) {
-    result.merged.push(`capability manifests (${changed})`);
+  if (changed > 0) result.merged.push(`capability manifests (${changed})`);
+}
+
+async function migrateLegacyTopLevelBundles(targetDir, result) {
+  const legacy = path.join(targetDir, 'bundles');
+  const next = path.join(targetDir, 'delivery', 'bundles');
+
+  if (!(await exists(legacy))) return;
+
+  const entries = await fs.readdir(legacy, { withFileTypes: true });
+  const userEntries = entries.filter((entry) => entry.name !== 'index.md');
+
+  if (!userEntries.length) return;
+
+  await fs.mkdir(next, { recursive: true });
+
+  for (const entry of userEntries) {
+    const source = path.join(legacy, entry.name);
+    const target = path.join(next, entry.name);
+    if (await exists(target)) continue;
+    await fs.rename(source, target);
   }
+
+  result.merged.push('legacy bundles moved to delivery/bundles');
 }
 
 async function assertWorkspace(targetDir) {
-  if (!(await exists(targetDir))) {
-    throw new Error(`Workspace not found: ${targetDir}`);
-  }
+  if (!(await exists(targetDir))) throw new Error(`Workspace not found: ${targetDir}`);
 
   const hasAiddConfig = await exists(path.join(targetDir, 'aidd.config.json'));
   const hasCommon = await exists(path.join(targetDir, 'common'));
@@ -290,10 +285,7 @@ async function copyDir(from, to, options = {}) {
   const overwrite = options.overwrite ?? false;
   const result = options.result;
   const label = options.label;
-
-  if (!(await exists(from))) {
-    return;
-  }
+  if (!(await exists(from))) return;
 
   await fs.mkdir(to, { recursive: true });
   const entries = await fs.readdir(from, { withFileTypes: true });
@@ -301,17 +293,11 @@ async function copyDir(from, to, options = {}) {
   for (const entry of entries) {
     const source = path.join(from, entry.name);
     const target = path.join(to, entry.name);
-
-    if (entry.isDirectory()) {
-      await copyDir(source, target, options);
-    } else if (overwrite || !(await exists(target))) {
-      await fs.copyFile(source, target);
-    }
+    if (entry.isDirectory()) await copyDir(source, target, options);
+    else if (overwrite || !(await exists(target))) await fs.copyFile(source, target);
   }
 
-  if (result && label && !result.copied.includes(label)) {
-    result.copied.push(label);
-  }
+  if (result && label && !result.copied.includes(label)) result.copied.push(label);
 }
 
 async function copyFileIfMissing(source, target, result, label) {
@@ -327,20 +313,14 @@ async function replacePlaceholders(root, replacements) {
 
   for (const entry of entries) {
     const fullPath = path.join(root, entry.name);
-
     if (entry.isDirectory()) {
       await replacePlaceholders(fullPath, replacements);
       continue;
     }
-
     if (!/\.(md|json|mjs|txt)$/i.test(entry.name)) continue;
 
     let content = await fs.readFile(fullPath, 'utf8');
-
-    for (const [from, to] of Object.entries(replacements)) {
-      content = content.split(from).join(to);
-    }
-
+    for (const [from, to] of Object.entries(replacements)) content = content.split(from).join(to);
     await fs.writeFile(fullPath, content);
   }
 }
@@ -351,11 +331,7 @@ function runCommand(command, args, cwd) {
     const executable = isWindows ? 'cmd.exe' : command;
     const executableArgs = isWindows ? ['/d', '/s', '/c', command, ...args] : args;
 
-    const child = spawn(executable, executableArgs, {
-      cwd,
-      stdio: 'inherit'
-    });
-
+    const child = spawn(executable, executableArgs, { cwd, stdio: 'inherit' });
     child.on('error', reject);
     child.on('close', (code) => {
       const displayCommand = [command, ...args].join(' ');
@@ -378,30 +354,17 @@ function deepMergeMissing(target, source) {
   for (const [key, value] of Object.entries(source)) {
     if (target[key] === undefined) {
       target[key] = value;
-    } else if (
-      value &&
-      typeof value === 'object' &&
-      !Array.isArray(value) &&
-      typeof target[key] === 'object' &&
-      !Array.isArray(target[key])
-    ) {
+    } else if (value && typeof value === 'object' && !Array.isArray(value) && typeof target[key] === 'object' && !Array.isArray(target[key])) {
       deepMergeMissing(target[key], value);
     }
   }
-
   return target;
 }
 
 function packageNameFromFolder(folderName) {
-  return folderName
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'aidd-workspace';
+  return folderName.trim().toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'aidd-workspace';
 }
 
 function titleFromSlug(slug) {
-  return slug
-    .replace(/[-_]+/g, ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+  return slug.replace(/[-_]+/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 }

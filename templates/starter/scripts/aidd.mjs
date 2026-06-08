@@ -28,14 +28,20 @@ try {
     case 'capability:list':
       await listCapabilities();
       break;
-    case 'slice':
-      await createSlice(args);
+    case 'bundle:create':
+      await createBundle(args);
       break;
-    case 'slice:ready':
-      await markSliceReady(args);
+    case 'bundle:ready':
+      await markBundleReady(args);
       break;
-    case 'bundle':
-      await bundleSlice(args);
+    case 'bundle:export':
+      await exportBundle(args);
+      break;
+    case 'bundle:list':
+      await listBundles();
+      break;
+    case 'delivery:roadmap':
+      await refreshRoadmap();
       break;
     case 'capability':
       await capabilityPack(args);
@@ -59,9 +65,11 @@ function help() {
   module:list
   capability:create <slug> --title "Title" --modules ai,characters
   capability:list
-  slice <capability> --id SLICE-001 --title "Slice title"
-  slice:ready <slice-id>
-  bundle <slice-id>
+  bundle:create <id> --title "Title" --capability <slug>
+  bundle:ready <id>
+  bundle:export <id>
+  bundle:list
+  delivery:roadmap
   capability <capability>
   clean`);
 }
@@ -76,14 +84,13 @@ async function check() {
     'capabilities/index.md',
     'capabilities/_template/index.md',
     'delivery/index.md',
-    'delivery/_template/delivery-slice.md',
-    'bundles/index.md'
+    'delivery/roadmap.md',
+    'delivery/bundles/index.md',
+    'delivery/bundles/_template/index.md',
+    'delivery/bundles/_template/bundle.json'
   ];
 
-  for (const file of required) {
-    await assertExists(file);
-  }
-
+  for (const file of required) await assertExists(file);
   console.log('AIDD check passed.');
 }
 
@@ -136,9 +143,7 @@ async function createCapability(args) {
   if (await exists(target)) throw new Error(`Capability already exists: ${slug}`);
 
   for (const moduleSlug of modules) {
-    if (!(await exists(p(CONFIG.modulesDir, moduleSlug)))) {
-      throw new Error(`Referenced module does not exist: ${moduleSlug}`);
-    }
+    if (!(await exists(p(CONFIG.modulesDir, moduleSlug)))) throw new Error(`Referenced module does not exist: ${moduleSlug}`);
   }
 
   await copyDir(p(CONFIG.capabilityTemplateDir), target);
@@ -163,164 +168,152 @@ async function createCapability(args) {
   console.log(`Created capability: ${slug}`);
 }
 
-async function createSlice(args) {
-  const capabilitySlug = positional(args)[0];
-  if (!capabilitySlug) throw new Error('Capability slug is required.');
-
-  const id = flag(args, 'id');
-  if (!id) throw new Error('--id is required.');
+async function createBundle(args) {
+  const id = positional(args)[0];
+  if (!id) throw new Error('Bundle ID is required.');
 
   const title = flag(args, 'title') ?? titleFromSlug(id);
+  const capabilitySlug = flag(args, 'capability');
+  if (!capabilitySlug) throw new Error('--capability is required.');
+
   const capabilityDir = p(CONFIG.capabilitiesDir, capabilitySlug);
   if (!(await exists(capabilityDir))) throw new Error(`Capability not found: ${capabilitySlug}`);
 
   const capability = await readJson(path.join(capabilityDir, 'capability.json'));
-  const date = new Date().toISOString().slice(0, 10);
-  const sliceDir = p(CONFIG.deliveryDir, capabilitySlug, `${id}-${date}`);
+  const bundleDir = p(CONFIG.deliveryBundlesDir, id);
+  if (await exists(bundleDir)) throw new Error(`Bundle already exists: ${id}`);
 
-  if (await exists(sliceDir)) throw new Error(`Slice already exists: ${path.relative(ROOT, sliceDir)}`);
-
-  await fs.mkdir(sliceDir, { recursive: true });
-
-  const referencedModules = (capability.modules ?? [])
-    .map((moduleSlug) => `- ${titleFromSlug(moduleSlug)} — \`modules/${moduleSlug}/02-boundaries.md\``)
-    .join('\n') || 'No modules referenced.';
-
-  let slice = await fs.readFile(p(CONFIG.deliveryTemplateDir, 'delivery-slice.md'), 'utf8');
-  slice = slice
-    .replaceAll('__SLICE_ID__', id)
-    .replaceAll('__SLICE_TITLE__', title)
-    .replaceAll('__CAPABILITY_SLUG__', capabilitySlug)
-    .replaceAll('__CAPABILITY_TITLE__', capability.title)
-    .replaceAll('__REFERENCED_MODULES__', referencedModules);
-
-  await fs.writeFile(path.join(sliceDir, `${id}.md`), slice);
-  await fs.writeFile(path.join(sliceDir, 'index.md'), `# ${id}\n\n- [Delivery slice](./${id}.md)\n- [Manifest](./manifest.json)\n`);
-
-  await writeJson(path.join(sliceDir, 'manifest.json'), {
-    id,
-    title,
-    capability: capabilitySlug,
-    status: 'draft',
-    readyForImplementation: false,
-    createdAt: new Date().toISOString(),
-    modules: capability.modules ?? []
+  await copyDir(p(CONFIG.bundleTemplateDir), bundleDir);
+  await replacePlaceholders(bundleDir, {
+    '__BUNDLE_ID__': id,
+    '__BUNDLE_TITLE__': title,
+    '__CAPABILITY_SLUG__': capabilitySlug,
+    '__CAPABILITY_TITLE__': capability.title
   });
 
-  console.log(`Created draft slice: ${id}`);
+  await writeJson(path.join(bundleDir, 'bundle.json'), {
+    id,
+    title,
+    status: 'draft',
+    capability: capabilitySlug,
+    modules: capability.modules ?? [],
+    priority: Number(flag(args, 'priority') ?? 100),
+    createdAt: new Date().toISOString(),
+    readyAt: null,
+    startedAt: null,
+    completedAt: null,
+    archivedAt: null
+  });
+
+  await fs.mkdir(path.join(bundleDir, 'exports'), { recursive: true });
+  await refreshBundlesIndex();
+  await refreshRoadmap();
+  console.log(`Created delivery bundle: ${id}`);
 }
 
-async function markSliceReady(args) {
+async function markBundleReady(args) {
   const id = positional(args)[0];
-  if (!id) throw new Error('Slice ID is required.');
+  if (!id) throw new Error('Bundle ID is required.');
 
-  const found = await findSlice(id);
-  if (!found) throw new Error(`Slice not found: ${id}`);
+  const found = await findBundle(id);
+  if (!found) throw new Error(`Bundle not found: ${id}`);
 
-  const sliceFile = path.join(found.dir, `${id}.md`);
-  const content = await fs.readFile(sliceFile, 'utf8');
-
-  const requiredSections = [
-    '## Delivery Scope',
-    '## Allowed Files',
-    '## Forbidden Files',
-    '## Tasks',
-    '## Acceptance Criteria',
-    '## AI Execution Contract',
-    '## Stop Conditions'
+  const requiredFiles = [
+    '01-context.md',
+    '02-scope.md',
+    '03-design.md',
+    '04-implementation-plan.md',
+    '05-tasks.md',
+    '06-acceptance.md',
+    '07-review.md',
+    '08-validation.md',
+    '09-handoff.md'
   ];
 
-  const missing = requiredSections.filter((section) => !content.includes(section));
-  if (missing.length) {
-    throw new Error(`Slice cannot be marked ready. Missing sections:\n${missing.map((item) => `- ${item}`).join('\n')}`);
+  const filesWithTodo = [];
+
+  for (const file of requiredFiles) {
+    const filePath = path.join(found.dir, file);
+    if (!(await exists(filePath))) throw new Error(`Bundle cannot be marked ready. Missing file: ${file}`);
+    const content = await fs.readFile(filePath, 'utf8');
+    if (content.includes('TODO')) filesWithTodo.push(file);
   }
 
-  if (content.includes('TODO')) {
-    throw new Error('Slice cannot be marked ready while TODO markers remain.');
+  if (filesWithTodo.length) {
+    throw new Error(`Bundle cannot be marked ready while TODO markers remain:\n${filesWithTodo.map((file) => `- ${file}`).join('\n')}`);
   }
 
-  const manifestPath = path.join(found.dir, 'manifest.json');
+  const manifestPath = path.join(found.dir, 'bundle.json');
   const manifest = await readJson(manifestPath);
   manifest.status = 'ready';
-  manifest.readyForImplementation = true;
   manifest.readyAt = new Date().toISOString();
   await writeJson(manifestPath, manifest);
 
-  console.log(`Marked slice ready: ${id}`);
+  await refreshBundlesIndex();
+  await refreshRoadmap();
+  console.log(`Marked bundle ready: ${id}`);
 }
 
-async function bundleSlice(args) {
+async function exportBundle(args) {
   const id = positional(args)[0];
-  if (!id) throw new Error('Slice ID is required.');
+  if (!id) throw new Error('Bundle ID is required.');
 
-  const found = await findSlice(id);
-  if (!found) throw new Error(`Slice not found: ${id}`);
+  const found = await findBundle(id);
+  if (!found) throw new Error(`Bundle not found: ${id}`);
 
-  const manifest = await readJson(path.join(found.dir, 'manifest.json'));
-  if (manifest.status !== 'ready' || !manifest.readyForImplementation) {
-    throw new Error(`Cannot bundle ${id}. Current status is ${manifest.status}. Run: npm run aidd:slice:ready -- ${id}`);
+  const manifest = await readJson(path.join(found.dir, 'bundle.json'));
+  if (manifest.status !== 'ready') {
+    throw new Error(`Cannot export ${id}. Current status is ${manifest.status}. Run: npm run aidd:bundle:ready -- ${id}`);
   }
 
   const capability = await readJson(p(CONFIG.capabilitiesDir, manifest.capability, 'capability.json'));
-  const sliceContent = await fs.readFile(path.join(found.dir, `${id}.md`), 'utf8');
-  const outDir = p(CONFIG.bundlesDir, id);
-  await fs.mkdir(outDir, { recursive: true });
+  const exportsDir = path.join(found.dir, 'exports');
+  await fs.mkdir(exportsDir, { recursive: true });
 
   const moduleBoundaryLinks = (manifest.modules ?? [])
     .map((moduleSlug) => `- modules/${moduleSlug}/02-boundaries.md`)
     .join('\n') || '- No module boundaries referenced.';
 
-  const plan = `# ${id} Implementation Plan
+  let content = `# ${id} Agent Export
 
-## Work Sequence
+## Bundle Metadata
 
-1. Read this bundle fully.
-2. Confirm the readiness gate.
-3. Review capability scope.
-4. Review referenced module boundaries.
-5. Complete tasks in order.
-6. Run the smallest relevant checks.
-7. Report files changed, tasks completed, checks run, and remaining risks.
+- Bundle ID: ${id}
+- Title: ${manifest.title}
+- Capability: ${capability.title}
+- Status at export: ${manifest.status}
+- Generated: ${new Date().toISOString()}
+
+## Context Loading Order
+
+1. This export.
+2. Capability: capabilities/${manifest.capability}/index.md
+3. Referenced module boundaries.
+4. Common delivery rules and standards.
 
 ## Module Boundary Rules
 
 ${moduleBoundaryLinks}
 `;
 
-  const bundle = `# ${id} Implementation Bundle
+  for (const file of [
+    '01-context.md',
+    '02-scope.md',
+    '03-design.md',
+    '04-implementation-plan.md',
+    '05-tasks.md',
+    '06-acceptance.md',
+    '07-review.md',
+    '08-validation.md',
+    '09-handoff.md'
+  ]) {
+    content += `\n---\n\n`;
+    content += await fs.readFile(path.join(found.dir, file), 'utf8');
+    content += '\n';
+  }
 
-## Bundle Metadata
-
-- Slice ID: ${id}
-- Capability: ${capability.title}
-- Status at bundle creation: ${manifest.status}
-- Generated: ${new Date().toISOString()}
-
-## Context Loading Order
-
-1. This bundle.
-2. Capability: capabilities/${manifest.capability}/index.md
-3. Referenced module boundaries.
-4. Common delivery rules and standards.
-
-${plan}
-
----
-
-${sliceContent}
-`;
-
-  await fs.writeFile(path.join(outDir, `${id}.bundle.md`), bundle);
-  await fs.writeFile(path.join(outDir, 'implementation-plan.md'), plan);
-  await writeJson(path.join(outDir, 'manifest.json'), {
-    id,
-    capability: manifest.capability,
-    modules: manifest.modules ?? [],
-    generatedAt: new Date().toISOString(),
-    source: path.relative(ROOT, found.dir)
-  });
-
-  console.log(`Generated bundle: ${path.relative(ROOT, outDir)}`);
+  await fs.writeFile(path.join(exportsDir, `${id}.agent.md`), content);
+  console.log(`Generated agent export: ${path.relative(ROOT, path.join(exportsDir, `${id}.agent.md`))}`);
 }
 
 async function capabilityPack(args) {
@@ -331,7 +324,7 @@ async function capabilityPack(args) {
   if (!(await exists(dir))) throw new Error(`Capability not found: ${slug}`);
 
   const manifest = await readJson(path.join(dir, 'capability.json'));
-  const outDir = p(CONFIG.bundlesDir, 'capabilities');
+  const outDir = p(CONFIG.deliveryBundlesDir, '_capability-packs');
   await fs.mkdir(outDir, { recursive: true });
 
   let content = `# ${manifest.title} Capability Pack\n\n`;
@@ -349,21 +342,20 @@ async function capabilityPack(args) {
   }
 
   await fs.writeFile(path.join(outDir, `${slug}.capability.md`), content);
-  console.log(`Generated capability pack: ${path.join('bundles', 'capabilities', `${slug}.capability.md`)}`);
+  console.log(`Generated capability pack: ${path.join(CONFIG.deliveryBundlesDir, '_capability-packs', `${slug}.capability.md`)}`);
 }
 
 async function listAll() {
   await listModules();
   await listCapabilities();
+  await listBundles();
 }
 
 async function listModules() {
   const modules = await readEntities(CONFIG.modulesDir, 'module.json');
   console.log('Modules:');
   if (!modules.length) console.log('  none');
-  for (const module of modules) {
-    console.log(`  ${module.slug} — ${module.title} (${module.status})`);
-  }
+  for (const module of modules) console.log(`  ${module.slug} — ${module.title} (${module.status})`);
 }
 
 async function listCapabilities() {
@@ -376,12 +368,22 @@ async function listCapabilities() {
   }
 }
 
+async function listBundles() {
+  const bundles = await readEntities(CONFIG.deliveryBundlesDir, 'bundle.json');
+  console.log('Delivery bundles:');
+  if (!bundles.length) console.log('  none');
+  for (const bundle of bundles) console.log(`  ${bundle.id} — ${bundle.title} (${bundle.status}; capability: ${bundle.capability})`);
+}
+
 async function clean() {
-  const dir = p(CONFIG.bundlesDir);
-  await fs.rm(dir, { recursive: true, force: true });
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(path.join(dir, 'index.md'), '# Bundles\n\nGenerated implementation bundles are written here.\n');
-  console.log('Cleaned generated bundles.');
+  const dirs = await readDirs(p(CONFIG.deliveryBundlesDir));
+  for (const dir of dirs) {
+    if (dir.startsWith('_')) continue;
+    const exportsDir = p(CONFIG.deliveryBundlesDir, dir, 'exports');
+    await fs.rm(exportsDir, { recursive: true, force: true });
+    await fs.mkdir(exportsDir, { recursive: true });
+  }
+  console.log('Cleaned generated bundle exports.');
 }
 
 async function refreshModulesIndex() {
@@ -434,6 +436,52 @@ async function refreshCapabilitiesIndex() {
   await replaceManagedSection(p(CONFIG.capabilitiesDir, 'index.md'), '## Active capabilities', section);
 }
 
+async function refreshBundlesIndex() {
+  const bundles = await readEntities(CONFIG.deliveryBundlesDir, 'bundle.json');
+  const section = [
+    '## Bundles',
+    '',
+    bundles.length ? bundles.map((bundle) => `- [${bundle.title}](./${bundle.id}/index.md) — ${bundle.status}`).join('\n') : 'No delivery bundles yet.',
+    ''
+  ].join('\n');
+
+  await replaceManagedSection(p(CONFIG.deliveryBundlesDir, 'index.md'), '## Bundles', section);
+}
+
+async function refreshRoadmap() {
+  const bundles = await readEntities(CONFIG.deliveryBundlesDir, 'bundle.json');
+  const statuses = ['draft', 'planned', 'ready', 'in-progress', 'completed', 'archived'];
+  const lines = ['# Delivery Roadmap', '', 'Generated from delivery bundle metadata.', ''];
+
+  for (const currentStatus of statuses) {
+    lines.push(`## ${titleFromSlug(currentStatus)}`);
+    lines.push('');
+
+    const group = bundles
+      .filter((bundle) => (bundle.status ?? 'draft') === currentStatus)
+      .sort((a, b) => (a.priority ?? 100) - (b.priority ?? 100));
+
+    lines.push(group.length
+      ? group.map((bundle) => `- [${bundle.title}](./bundles/${bundle.id}/index.md) — ${bundle.id}`).join('\n')
+      : `No ${currentStatus} bundles.`);
+    lines.push('');
+  }
+
+  await fs.writeFile(p(CONFIG.deliveryDir, 'roadmap.md'), `${lines.join('\n').trimEnd()}\n`);
+  await writeJson(p(CONFIG.deliveryDir, 'roadmap.json'), {
+    bundles: bundles.map((bundle) => ({
+      id: bundle.id,
+      title: bundle.title,
+      status: bundle.status,
+      capability: bundle.capability,
+      modules: bundle.modules ?? [],
+      priority: bundle.priority ?? 100
+    }))
+  });
+
+  console.log('Updated delivery roadmap.');
+}
+
 function renderModuleList(modules, capabilities, emptyText) {
   if (!modules.length) return emptyText;
   return modules.map((module) => {
@@ -448,9 +496,7 @@ function renderModuleList(modules, capabilities, emptyText) {
 function renderCapabilityList(capabilities, emptyText) {
   if (!capabilities.length) return emptyText;
   return capabilities.map((capability) => {
-    const modules = (capability.modules ?? []).length
-      ? ` — modules: ${(capability.modules ?? []).join(', ')}`
-      : '';
+    const modules = (capability.modules ?? []).length ? ` — modules: ${(capability.modules ?? []).join(', ')}` : '';
     return `- [${capability.title}](./${capability.slug}/index.md)${modules}`;
   }).join('\n');
 }
@@ -476,29 +522,19 @@ async function readEntities(dirName, manifestName) {
     entities.push(await readJson(manifestPath));
   }
 
-  return entities.sort((a, b) => a.title.localeCompare(b.title));
+  return entities.sort((a, b) => (a.title ?? a.id).localeCompare(b.title ?? b.id));
 }
 
-async function findSlice(id) {
-  const deliveryDir = p(CONFIG.deliveryDir);
-  if (!(await exists(deliveryDir))) return null;
-
-  const capabilityDirs = await fs.readdir(deliveryDir, { withFileTypes: true });
-
-  for (const capabilityDir of capabilityDirs) {
-    if (!capabilityDir.isDirectory() || capabilityDir.name.startsWith('_')) continue;
-    const parent = path.join(deliveryDir, capabilityDir.name);
-    const sliceDirs = await fs.readdir(parent, { withFileTypes: true });
-
-    for (const sliceDir of sliceDirs) {
-      if (!sliceDir.isDirectory()) continue;
-      if (sliceDir.name.startsWith(`${id}-`) || sliceDir.name === id) {
-        return { capability: capabilityDir.name, dir: path.join(parent, sliceDir.name) };
-      }
-    }
-  }
-
+async function findBundle(id) {
+  const dir = p(CONFIG.deliveryBundlesDir, id);
+  if (await exists(dir)) return { dir };
   return null;
+}
+
+async function readDirs(dir) {
+  if (!(await exists(dir))) return [];
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
 }
 
 async function copyDir(from, to) {
@@ -523,9 +559,7 @@ async function replacePlaceholders(root, replacements) {
     if (!/\.(md|json)$/i.test(entry.name)) continue;
 
     let content = await fs.readFile(full, 'utf8');
-    for (const [from, to] of Object.entries(replacements)) {
-      content = content.split(from).join(to);
-    }
+    for (const [from, to] of Object.entries(replacements)) content = content.split(from).join(to);
     await fs.writeFile(full, content);
   }
 }
@@ -559,10 +593,8 @@ function flag(args, name) {
   const prefix = `--${name}=`;
   const inline = args.find((arg) => arg.startsWith(prefix));
   if (inline) return inline.slice(prefix.length);
-
   const index = args.indexOf(`--${name}`);
   if (index >= 0) return args[index + 1];
-
   return null;
 }
 

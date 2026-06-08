@@ -30,6 +30,6 @@
     "11-validation.md"
   ],
   "deliveryDir": "delivery",
-  "deliveryTemplateDir": "delivery/_template",
-  "bundlesDir": "bundles"
+  "deliveryBundlesDir": "delivery/bundles",
+  "bundleTemplateDir": "delivery/bundles/_template"
 }

@@ -2,8 +2,6 @@
 
 This is the generic capability template.
 
-Do not implement work from this folder.
-
 ## Capability files
 
 1. [Outcomes](./01-outcomes.md)
@@ -17,7 +15,3 @@ Do not implement work from this folder.
 9. [UX/UI](./09-ux-ui.md)
 10. [Risks](./10-risks.md)
 11. [Validation](./11-validation.md)
-
-## Referenced modules
-
-TODO: Add module references in `capability.json`.

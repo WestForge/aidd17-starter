@@ -7,7 +7,3 @@ TODO: Define why this module exists.
 ## Responsibilities
 
 - TODO
-
-## Outcomes Supported
-
-- TODO

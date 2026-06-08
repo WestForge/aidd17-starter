@@ -1,6 +1,6 @@
 {
   "name": "aidd17-starter",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Create and update plain Markdown AIDD workspaces for AI-assisted delivery.",
   "type": "module",
   "bin": {
@@ -14,10 +14,10 @@
   "keywords": [
     "aidd",
     "ai",
-    "documentation",
     "delivery",
     "markdown",
     "modules",
-    "capabilities"
+    "capabilities",
+    "bundles"
   ]
 }

@@ -2,8 +2,6 @@
 
 This is the generic module template.
 
-Do not implement work from this folder.
-
 ## Module files
 
 1. [Purpose](./01-purpose.md)

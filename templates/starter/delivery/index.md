@@ -1,7 +1,8 @@
 # Delivery
 
-Delivery contains scope-locked slices created from capabilities.
+Delivery contains the roadmap and phased delivery bundles.
 
-## Generic delivery template
+## Files
 
-- [Delivery template](./_template/index.md)
+- [Roadmap](./roadmap.md)
+- [Delivery bundles](./bundles/index.md)

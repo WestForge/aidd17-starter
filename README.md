@@ -1,6 +1,6 @@
 # AIDD Starter
 
-AIDD Starter creates and updates repo-native Markdown workspaces for organising project context, modules, capabilities, delivery slices, and AI-ready implementation bundles inside an existing software project.
+AIDD Starter creates and updates repo-native Markdown workspaces for organising project context, modules, capabilities, delivery roadmaps, and phased delivery bundles inside an existing software project.
 
 It is designed to live inside your project as a `docs` or `Docs` directory, so delivery knowledge stays close to the code, versioned with the work, and easy to open in a local editor.
 
@@ -19,6 +19,21 @@ cd docs
 npm run aidd:check
 npm run aidd:module:create -- ai --title "AI"
 npm run aidd:capability:create -- companion-behaviour --title "Companion Behaviour" --modules ai
+npm run aidd:bundle:create -- COMP-BEH-001 --title "Companion Behaviour Phase 1" --capability companion-behaviour
+npm run aidd:delivery:roadmap
+```
+
+Complete the generated delivery bundle, then mark it ready and create an agent export:
+
+```bash
+npm run aidd:bundle:ready -- COMP-BEH-001
+npm run aidd:bundle:export -- COMP-BEH-001
+```
+
+Your agent export will be generated at:
+
+```text
+delivery/bundles/COMP-BEH-001/exports/COMP-BEH-001.agent.md
 ```
 
 ## Update an existing AIDD workspace
@@ -35,7 +50,7 @@ Or from inside the docs folder:
 npx github:WestForge/aidd17-starter update .
 ```
 
-The update command refreshes AIDD tooling and framework-owned templates while preserving your project docs, modules, capabilities, delivery slices, and bundles.
+The update command refreshes AIDD tooling and framework-owned templates while preserving your project docs, modules, capabilities, delivery roadmap, and delivery bundles.
 
 ## Core model
 
@@ -50,13 +65,13 @@ capabilities/
   Product or technical outcomes that may reference one or more modules.
 
 delivery/
-  Scope-locked slices that define what is being built now.
+  Roadmap and delivery bundles.
 
-bundles/
-  Generated implementation packs for AI agents or developers.
+delivery/bundles/
+  Planned delivery packages with phases and agent exports.
 ```
 
-Modules define boundaries. Capabilities define outcomes. Delivery slices define implementation scope.
+Modules define boundaries. Capabilities define outcomes. Delivery bundles define planned work. Delivery is the roadmap/queue of bundles.
 
 ## Useful commands
 
@@ -70,9 +85,12 @@ npm run aidd:module:list
 npm run aidd:capability:create -- companion-behaviour --title "Companion Behaviour" --modules ai,characters
 npm run aidd:capability:list
 
-npm run aidd:slice -- companion-behaviour --id COMP-BEH-001 --title "Companion Behaviour Slice 001"
-npm run aidd:slice:ready -- COMP-BEH-001
-npm run aidd:bundle -- COMP-BEH-001
+npm run aidd:bundle:create -- COMP-BEH-001 --title "Companion Behaviour Phase 1" --capability companion-behaviour
+npm run aidd:bundle:ready -- COMP-BEH-001
+npm run aidd:bundle:export -- COMP-BEH-001
+npm run aidd:bundle:list
+
+npm run aidd:delivery:roadmap
 npm run aidd:capability -- companion-behaviour
 npm run aidd:clean
 ```
