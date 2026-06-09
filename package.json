@@ -1,14 +1,14 @@
 {
   "name": "aidd17-starter",
-  "version": "0.4.0",
-  "description": "Create and update plain Markdown AIDD workspaces for AI-assisted delivery.",
+  "version": "0.5.0",
+  "description": "Create and update AIDD delivery control workspaces.",
   "type": "module",
   "bin": {
     "create-aidd": "./bin/create-aidd.mjs"
   },
   "files": [
     "bin",
-    "templates"
+    "template"
   ],
   "license": "MIT",
   "keywords": [

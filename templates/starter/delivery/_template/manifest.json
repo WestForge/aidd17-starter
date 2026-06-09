@@ -1,9 +1,0 @@
-{
-  "id": "__SLICE_ID__",
-  "title": "__SLICE_TITLE__",
-  "capability": "__CAPABILITY_SLUG__",
-  "status": "draft",
-  "readyForImplementation": false,
-  "createdAt": "__CREATED_AT__",
-  "modules": []
-}

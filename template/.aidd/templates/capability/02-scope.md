@@ -1,0 +1,3 @@
+# __CAPABILITY_TITLE__ Scope
+
+TODO

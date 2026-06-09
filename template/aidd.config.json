@@ -1,0 +1,9 @@
+{
+  "root": ".",
+  "commonDir": "common",
+  "modulesDir": "modules",
+  "capabilitiesDir": "capabilities",
+  "deliveryDir": "delivery",
+  "deliveryBundlesDir": "delivery/bundles",
+  "sourceRoots": []
+}
